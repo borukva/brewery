@@ -17,28 +17,25 @@ import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ConsumableComponent;
 import net.minecraft.component.type.CustomModelDataComponent;
 import net.minecraft.component.type.PotionContentsComponent;
-import net.minecraft.component.type.TooltipDisplayComponent;
+import net.minecraft.component.type.LoreComponent;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.*;
 import net.minecraft.item.consume.UseAction;
-import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.stat.Stats;
-import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.ColorHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.event.GameEvent;
 import org.jetbrains.annotations.Nullable;
 import xyz.nucleoid.packettweaker.PacketContext;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 public class DrinkItem extends Item implements PolymerItem {
     public DrinkItem(Settings settings) {
@@ -138,21 +135,80 @@ public class DrinkItem extends Item implements PolymerItem {
             if (id != null) {
                 text = id.name(stack).text();
             } else {
-                text = Text.literal("<Unknown>");
+                text = Text.translatable("item.brewery.unknown_drink");
             }
 
             return Text.translatable(this.getTranslationKey(), text);
         }
     }
 
-    @Override
-    public void appendTooltip(ItemStack stack, TooltipContext context, TooltipDisplayComponent displayComponent, Consumer<Text> textConsumer, TooltipType typex) {
+//    @Override
+//    public void appendTooltip(ItemStack stack, TooltipContext context, TooltipDisplayComponent displayComponent, Consumer<Text> textConsumer, TooltipType typex) {
+//        var world = BreweryInit.getOverworld();
+//        if (world != null) {
+//            var type = DrinkUtils.getType(stack);
+//            if (type != null && type.showQuality() && world.getGameRules().getBoolean(BrewGameRules.SHOW_QUALITY)) {
+//                var quality
+//                        = DrinkUtils.getQuality(stack);
+//                var starCount = (Math.round((quality / 2) * 10)) / 10d;
+//
+//                StringBuilder stars = new StringBuilder();
+//                StringBuilder antistars = new StringBuilder();
+//
+//                while (starCount >= 1) {
+//                    stars.append("⭐");
+//                    starCount--;
+//                }
+//
+//                if (starCount > 0) {
+//                    stars.append("☆");
+//                }
+//
+//                var starsLeft = 5 - stars.length();
+//                for (int i = 0; i < starsLeft; i++) {
+//                    antistars.append("☆");
+//                }
+//
+//                textConsumer.accept(Text.translatable("text.brewery.quality", Text.empty()
+//                        .append(Text.literal(stars.toString()).formatted(Formatting.YELLOW))
+//                        .append(Text.literal(antistars.toString()).formatted(Formatting.DARK_GRAY))
+//                ));
+//            }
+//
+//            if (world.getGameRules().getBoolean(BrewGameRules.SHOW_AGE)) {
+//                double mult = world != null ? world.getGameRules().get(BrewGameRules.BARREL_AGING_MULTIPLIER).get() : 1;
+//
+//                var age = DrinkUtils.getAgeInSeconds(stack) / mult;
+//                if (age > 0) {
+//                    textConsumer.accept(Text.translatable("text.brewery.age", BrewUtils.fromTimeShort(age).formatted(Formatting.GRAY)));
+//                }
+//            }
+//
+//            if (BreweryInit.DISPLAY_DEV) {
+//                textConsumer.accept(Text.literal("== DEV ==").formatted(Formatting.AQUA));
+//                textConsumer.accept(Text.literal("BrewType: ").append(stack.getOrDefault(BrewComponents.BREW_DATA, BrewData.DEFAULT).type().toString()).formatted(Formatting.GRAY));
+//                textConsumer.accept(Text.literal("BrewQuality: ").append("" + DrinkUtils.getQuality(stack)).formatted(Formatting.GRAY));
+//                textConsumer.accept(Text.literal("BrewAge: ").append("" + DrinkUtils.getAgeInTicks(stack)).formatted(Formatting.GRAY));
+//                textConsumer.accept(Text.literal("BrewDistillated: ").append("" + DrinkUtils.getDistillationStatus(stack)).formatted(Formatting.GRAY));
+//            }
+//        }
+//    }
+
+    public static ItemStack appendLore(ItemStack polymerItemStack, ItemStack itemStack){
         var world = BreweryInit.getOverworld();
         if (world != null) {
-            var type = DrinkUtils.getType(stack);
+            var type = DrinkUtils.getType(itemStack);
+            LoreComponent lore = polymerItemStack.getComponents().get(DataComponentTypes.LORE);
+            if(lore == null) {
+                // Create new LoreComponent with mutable ArrayList
+                lore = new LoreComponent(new ArrayList<>());
+            } else {
+                // Create new LoreComponent with mutable copy of existing lines
+                lore = new LoreComponent(new ArrayList<>(lore.lines()));
+            }
+
             if (type != null && type.showQuality() && world.getGameRules().getBoolean(BrewGameRules.SHOW_QUALITY)) {
-                var quality
-                        = DrinkUtils.getQuality(stack);
+                var quality = DrinkUtils.getQuality(itemStack);
                 var starCount = (Math.round((quality / 2) * 10)) / 10d;
 
                 StringBuilder stars = new StringBuilder();
@@ -168,33 +224,35 @@ public class DrinkItem extends Item implements PolymerItem {
                 }
 
                 var starsLeft = 5 - stars.length();
-                for (int i = 0; i < starsLeft; i++) {
-                    antistars.append("☆");
-                }
+                antistars.append("☆".repeat(Math.max(0, starsLeft)));
 
-                textConsumer.accept(Text.translatable("text.brewery.quality", Text.empty()
+                lore.lines().add(Text.translatable("text.brewery.quality", Text.empty()
                         .append(Text.literal(stars.toString()).formatted(Formatting.YELLOW))
                         .append(Text.literal(antistars.toString()).formatted(Formatting.DARK_GRAY))
-                ));
+                ).formatted(Formatting.DARK_GRAY));
             }
 
             if (world.getGameRules().getBoolean(BrewGameRules.SHOW_AGE)) {
-                double mult = world != null ? world.getGameRules().get(BrewGameRules.BARREL_AGING_MULTIPLIER).get() : 1;
+                double mult = world.getGameRules().get(BrewGameRules.BARREL_AGING_MULTIPLIER).get();
 
-                var age = DrinkUtils.getAgeInSeconds(stack) / mult;
+                var age = DrinkUtils.getAgeInSeconds(itemStack) / mult;
                 if (age > 0) {
-                    textConsumer.accept(Text.translatable("text.brewery.age", BrewUtils.fromTimeShort(age).formatted(Formatting.GRAY)));
+                    lore.lines().add(Text.translatable("text.brewery.age", BrewUtils.fromTimeShort(age)).formatted(Formatting.DARK_GRAY));
                 }
             }
 
             if (BreweryInit.DISPLAY_DEV) {
-                textConsumer.accept(Text.literal("== DEV ==").formatted(Formatting.AQUA));
-                textConsumer.accept(Text.literal("BrewType: ").append(stack.getOrDefault(BrewComponents.BREW_DATA, BrewData.DEFAULT).type().toString()).formatted(Formatting.GRAY));
-                textConsumer.accept(Text.literal("BrewQuality: ").append("" + DrinkUtils.getQuality(stack)).formatted(Formatting.GRAY));
-                textConsumer.accept(Text.literal("BrewAge: ").append("" + DrinkUtils.getAgeInTicks(stack)).formatted(Formatting.GRAY));
-                textConsumer.accept(Text.literal("BrewDistillated: ").append("" + DrinkUtils.getDistillationStatus(stack)).formatted(Formatting.GRAY));
+                lore.lines().add(Text.literal("== DEV ==").formatted(Formatting.AQUA));
+                lore.lines().add(Text.literal("BrewType: ").append(itemStack.getOrDefault(BrewComponents.BREW_DATA, BrewData.DEFAULT).type().toString()).formatted(Formatting.GRAY));
+                lore.lines().add(Text.literal("BrewQuality: ").append("" + DrinkUtils.getQuality(itemStack)).formatted(Formatting.GRAY));
+                lore.lines().add(Text.literal("BrewAge: ").append("" + DrinkUtils.getAgeInTicks(itemStack)).formatted(Formatting.GRAY));
+                lore.lines().add(Text.literal("BrewDistillated: ").append("" + DrinkUtils.getDistillationStatus(itemStack)).formatted(Formatting.GRAY));
             }
+
+            //System.out.println(lore.lines());
+            polymerItemStack.set(DataComponentTypes.LORE, lore);
         }
+        return polymerItemStack;
     }
 
     @Override
@@ -223,6 +281,7 @@ public class DrinkItem extends Item implements PolymerItem {
             ));
 
             out.set(DataComponentTypes.CONSUMABLE, new ConsumableComponent((float) type.drinkingTime(stack, context.getPlayer()), visual.animation(), visual.soundEvent(), visual.particles(), List.of()));
+            appendLore(out, stack);
         } else {
             out.set(DataComponentTypes.CUSTOM_MODEL_DATA, new CustomModelDataComponent(
                     FloatList.of((float) DrinkUtils.getQuality(stack), (float) DrinkUtils.getAgeInSeconds(stack), (float) DrinkUtils.getCookingAgeInSeconds(stack), DrinkUtils.getDistillationCount(stack)),

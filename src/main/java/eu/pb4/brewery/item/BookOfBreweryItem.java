@@ -24,9 +24,8 @@ import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 import xyz.nucleoid.packettweaker.PacketContext;
 
+import java.text.Collator;
 import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class BookOfBreweryItem extends Item implements PolymerItem {
     public BookOfBreweryItem(Settings settings) {
@@ -56,7 +55,12 @@ public class BookOfBreweryItem extends Item implements PolymerItem {
     public static void build(Collection<Map.Entry<Identifier, DrinkType>> input, double barrelAgingMultiplier, double cookingTimeMultiplier) {
         var builder = new BookElementBuilder();
         Gui.BOOKS.clear();
-        var types = input.stream().filter(x -> x.getValue().info().isPresent()).sorted(Comparator.comparing(x -> x.getValue().looks().nameSelector().select(7).text().getString())).toList();
+//        var types = input.stream().filter(x -> x.getValue().info().isPresent()).sorted(Comparator.comparing(x -> x.getValue().looks().nameSelector().select(7).text().getString())).toList();
+        Collator collator = Collator.getInstance(Locale.forLanguageTag("uk-UA"));
+        var types = input.stream()
+                .filter(x -> x.getValue().info().isPresent())
+                .sorted(Comparator.comparing(x -> x.getValue().looks().nameSelector().select(7).text().getString(), collator))
+                .toList();
 
         var container = FabricLoader.getInstance().getModContainer(BreweryInit.MOD_ID).get();
 
@@ -173,7 +177,7 @@ public class BookOfBreweryItem extends Item implements PolymerItem {
             list.add(Text.empty());
             for (var i : type.ingredients()) {
                 if (i.items().size() == 1) {
-                    list.add(Text.literal(i.count() + " × ").append(i.items().get(0).getName()));
+                    list.add(Text.literal(i.count() + " × ").append(i.items().getFirst().getName()));
                 } else {
                     var text = Text.translatable("polydex.brewery.any_of").append("\n");
 
@@ -201,7 +205,7 @@ public class BookOfBreweryItem extends Item implements PolymerItem {
                 list.add(Text.translatable("polydex.brewery.any_barrel"));
             } else {
                 if (info.bestBarrelType().size() == 1) {
-                    list.add(Text.translatable("container.brewery." + info.bestBarrelType().get(0) + "_barrel"));
+                    list.add(Text.translatable("container.brewery." + info.bestBarrelType().getFirst() + "_barrel"));
                 } else {
                     list.add(Text.translatable("polydex.brewery.one_of_barrel"));
                     for (var b : info.bestBarrelType()) {
@@ -223,8 +227,11 @@ public class BookOfBreweryItem extends Item implements PolymerItem {
 
         var x = new ArrayList<Text>();
         for (var t : list) {
+            if (t.getString().isEmpty() && x.isEmpty()) {
+                continue; // Пропускаємо порожні елементи на початку сторінки
+            }
             x.add(t);
-            if (x.size() == 10) {
+            if (x.size() == 12) {
                 builder.addPage(x.toArray(new Text[0]));
                 x.clear();
             }
@@ -235,9 +242,18 @@ public class BookOfBreweryItem extends Item implements PolymerItem {
             x.clear();
         }
 
-        for (var text : info.additionalInfo()) {
-            builder.addPage(text.text().copy());
+        if(!info.additionalInfo().isEmpty()) {
+            list.clear();
+            for (var text : info.additionalInfo()) {
+                list.add(text.text().copy());
+                list.add(Text.empty());
+            }
+            builder.addPage(list.toArray(new Text[0]));
         }
+
+//        for (var text : info.additionalInfo()) {
+//            builder.addPage(text.text().copy());
+//        }
 
         builder.setTitle(id.toString());
         builder.setAuthor("Brewery");
@@ -258,7 +274,7 @@ public class BookOfBreweryItem extends Item implements PolymerItem {
             this.stack = player.getStackInHand(hand);
             this.hand = hand;
             this.setPage(Math.min(stack.getOrDefault(BrewComponents.BOOK_PAGE, 0),
-                    indexBook.get(DataComponentTypes.WRITTEN_BOOK_CONTENT).getPages(false).size()));
+                    Objects.requireNonNull(indexBook.get(DataComponentTypes.WRITTEN_BOOK_CONTENT)).getPages(false).size()));
         }
 
         @Override

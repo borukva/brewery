@@ -1,13 +1,12 @@
 {
   "type": "minecraft:crafting_shaped",
   "key": {
-    "P": "#minecraft:planks",
-    "s": "minecraft:stick",
+    "I": "minecraft:iron_ingot",
     "S": "minecraft:stone"
   },
   "pattern": [
-    "sS",
-    "P "
+    "II",
+    "S "
   ],
   "result": {
     "id": "brewery:barrel_spigot"

@@ -25,7 +25,7 @@ public class BrewItems {
 
 
     public static final PolymerBlockItem BARREL_SPIGOT = register("barrel_spigot", (s) -> new PolymerBlockItem(
-            BrewBlocks.BARREL_SPIGOT, s.maxCount(16).useBlockPrefixedTranslationKey(), Items.TRIPWIRE_HOOK
+            BrewBlocks.BARREL_SPIGOT, s.maxCount(16).useBlockPrefixedTranslationKey()
     ));
 
     public static final DrinkItem DRINK_ITEM = register("drink_bottle", DrinkItem::new);
@@ -40,18 +40,18 @@ public class BrewItems {
             .entries((ctx, e) -> {
                 e.add(BOOK_ITEM);
                 e.add(BARREL_SPIGOT);
-
-                for (var entry : BreweryInit.DRINK_TYPES.entrySet()) {
-                    e.add(DrinkUtils.createDrink(entry.getKey(), 0, 10, entry.getValue().distillationRuns(), Blocks.AIR));
-                }
-
-                if (BreweryInit.IS_DEV) {
+//                if (BreweryInit.IS_DEV) {
                     e.add(DEBUG_BLOCK_TICKER.create(20));
                     e.add(DEBUG_BLOCK_TICKER.create(60 * 20));
                     e.add(DEBUG_BLOCK_TICKER.create(60 * 60 * 20));
                     e.add(DEBUG_BLOCK_TICKER.create(24000));
                     e.add(DEBUG_BLOCK_TICKER.create(24000 * 7));
+//                }
+
+                for (var entry : BreweryInit.DRINK_TYPES.entrySet()) {
+                    e.add(DrinkUtils.createDrink(entry.getKey(), 0, 10, entry.getValue().distillationRuns(), Blocks.AIR));
                 }
+
             })
             .build();
 

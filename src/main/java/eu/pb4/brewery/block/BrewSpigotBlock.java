@@ -3,9 +3,9 @@ package eu.pb4.brewery.block;
 import com.mojang.serialization.MapCodec;
 import eu.pb4.brewery.block.entity.BrewBarrelSpigotBlockEntity;
 import eu.pb4.brewery.block.entity.BrewBlockEntities;
-import eu.pb4.placeholders.api.ParserContext;
+import eu.pb4.factorytools.api.virtualentity.BlockModel;
+import eu.pb4.factorytools.api.virtualentity.ItemDisplayElementUtil;
 import eu.pb4.polymer.core.api.block.PolymerBlock;
-import eu.pb4.polymer.core.api.utils.PolymerUtils;
 import eu.pb4.polymer.virtualentity.api.BlockWithElementHolder;
 import eu.pb4.polymer.virtualentity.api.ElementHolder;
 import eu.pb4.polymer.virtualentity.api.elements.ItemDisplayElement;
@@ -17,23 +17,21 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemDisplayContext;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.state.StateManager;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import xyz.nucleoid.packettweaker.PacketContext;
+
+import static eu.pb4.brewery.BreweryInit.id;
 
 public final class BrewSpigotBlock extends HorizontalFacingBlock implements PolymerBlock, BlockEntityProvider, BlockWithElementHolder {
     private static final MapCodec<BrewSpigotBlock> CODEC = createCodec(BrewSpigotBlock::new);
@@ -136,30 +134,49 @@ public final class BrewSpigotBlock extends HorizontalFacingBlock implements Poly
         return BrewBarrelSpigotBlockEntity::ticker;
     }
 
-    @Override
-    public @Nullable ElementHolder createElementHolder(ServerWorld world, BlockPos pos, BlockState initialBlockState) {
-        var holder = new ElementHolder();
-        var m = new Matrix4f();
+//    @Override
+//    public @Nullable ElementHolder createElementHolder(ServerWorld world, BlockPos pos, BlockState initialBlockState) {
+//        var holder = new ElementHolder();
+//        var m = new Matrix4f();
+//
+//        for (var i = 0; i < 3; i++) {
+//            for (var o = 0; o < 2; o++) {
+//                var a = new ItemDisplayElement(PolymerUtils.createPlayerHead("ewogICJ0aW1lc3RhbXAiIDogMTY3ODU0MTAyNzMwNiwKICAicHJvZmlsZUlkIiA6ICI4MTc1MTc4NzQ2MjE0NmY2YjllOWM3MTYyMWRiODQwZSIsCiAgInByb2ZpbGVOYW1lIiA6ICJSZWFwcGVhcmFuY2UiLAogICJzaWduYXR1cmVSZXF1aXJlZCIgOiB0cnVlLAogICJ0ZXh0dXJlcyIgOiB7CiAgICAiU0tJTiIgOiB7CiAgICAgICJ1cmwiIDogImh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNmY3NTVjNDc1YTcwODcxMGQwNGRiZDk0YjNiZDI5MDZlMDFhODMwY2IwNGE2Y2QyYWExY2JhOTk2YmU3OGYyZCIsCiAgICAgICJtZXRhZGF0YSIgOiB7CiAgICAgICAgIm1vZGVsIiA6ICJzbGltIgogICAgICB9CiAgICB9CiAgfQp9"));
+//                a.setItemDisplayContext(ItemDisplayContext.FIXED);
+//                a.setDisplayHeight(5f);
+//                a.setDisplayWidth(5f);
+//                a.setViewRange(0.5f);
+//                a.setTransformation(m.identity().rotateY(MathHelper.HALF_PI-initialBlockState.get(FACING).getHorizontalQuarterTurns() * MathHelper.HALF_PI)
+//                        .translate(-1.3f - i * 1.2f, 0, 0).scale(2)
+//                        .rotateX(o * MathHelper.HALF_PI)
+//                        .scale(0.15f, 3.001f, 2.001f));
+//                holder.addElement(a);
+//            }
+//        }
+//        return holder;
+//    }
 
-        for (var i = 0; i < 3; i++) {
-            for (var o = 0; o < 2; o++) {
-                var a = new ItemDisplayElement(PolymerUtils.createPlayerHead("ewogICJ0aW1lc3RhbXAiIDogMTY3ODU0MTAyNzMwNiwKICAicHJvZmlsZUlkIiA6ICI4MTc1MTc4NzQ2MjE0NmY2YjllOWM3MTYyMWRiODQwZSIsCiAgInByb2ZpbGVOYW1lIiA6ICJSZWFwcGVhcmFuY2UiLAogICJzaWduYXR1cmVSZXF1aXJlZCIgOiB0cnVlLAogICJ0ZXh0dXJlcyIgOiB7CiAgICAiU0tJTiIgOiB7CiAgICAgICJ1cmwiIDogImh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNmY3NTVjNDc1YTcwODcxMGQwNGRiZDk0YjNiZDI5MDZlMDFhODMwY2IwNGE2Y2QyYWExY2JhOTk2YmU3OGYyZCIsCiAgICAgICJtZXRhZGF0YSIgOiB7CiAgICAgICAgIm1vZGVsIiA6ICJzbGltIgogICAgICB9CiAgICB9CiAgfQp9"));
-                a.setItemDisplayContext(ItemDisplayContext.FIXED);
-                a.setDisplayHeight(5f);
-                a.setDisplayWidth(5f);
-                a.setViewRange(0.5f);
-                a.setTransformation(m.identity().rotateY(MathHelper.HALF_PI-initialBlockState.get(FACING).getHorizontalQuarterTurns() * MathHelper.HALF_PI)
-                        .translate(-1.3f - i * 1.2f, 0, 0).scale(2)
-                        .rotateX(o * MathHelper.HALF_PI)
-                        .scale(0.15f, 3.001f, 2.001f));
-                holder.addElement(a);
-            }
-        }
-        return holder;
+    public ElementHolder createElementHolder(ServerWorld world, BlockPos pos, BlockState initialBlockState) {
+        return new Model(initialBlockState.get(FACING).getOpposite());
     }
 
     @Override
     public BlockState getPolymerBlockState(BlockState state, PacketContext context) {
-        return Blocks.TRIPWIRE_HOOK.getDefaultState().with(TripwireHookBlock.FACING, state.get(FACING).getOpposite());
+        return Blocks.STRUCTURE_VOID.getDefaultState();
+    }
+
+    private static final class Model extends BlockModel {
+        public static final ItemStack spigot_model = ItemDisplayElementUtil.getModel(id("block/barrel_spigot"));
+        private final ItemDisplayElement mainElement;
+
+        private Model(Direction direction) {
+            mainElement = ItemDisplayElementUtil.createSimple(spigot_model);
+//            mainElement.setScale(new Vector3f(3f));
+//            mainElement.setOffset(new Vec3d(0f, -0.16f, -0.13f));
+            this.addElement(mainElement);
+            Matrix4f matrix = new Matrix4f();
+            matrix.rotateY((float) Math.toRadians(-direction.getPositiveHorizontalDegrees()));
+            mainElement.setTransformation(matrix);
+        }
     }
 }

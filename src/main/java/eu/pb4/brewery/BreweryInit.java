@@ -3,13 +3,10 @@ package eu.pb4.brewery;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParser;
 import com.mojang.logging.LogUtils;
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.JsonOps;
 import eu.pb4.brewery.block.BrewBlocks;
 import eu.pb4.brewery.block.BrewCauldronBlock;
 import eu.pb4.brewery.block.entity.BrewBlockEntities;
-import eu.pb4.brewery.compat.PolydexCompatImpl;
 import eu.pb4.brewery.drink.AlcoholValueEffect;
 import eu.pb4.brewery.drink.DefaultDefinitions;
 import eu.pb4.brewery.drink.DrinkType;
@@ -19,9 +16,9 @@ import eu.pb4.brewery.item.BrewItems;
 import eu.pb4.brewery.other.BrewCommands;
 import eu.pb4.brewery.other.BrewGameRules;
 import eu.pb4.brewery.other.BrewNetworking;
-import eu.pb4.brewery.other.FloatSelector;
 import eu.pb4.polymer.common.api.PolymerCommonUtils;
 import eu.pb4.polymer.resourcepack.api.PolymerResourcePackUtils;
+import eu.pb4.polymer.resourcepack.extras.api.ResourcePackExtras;
 import it.unimi.dsi.fastutil.objects.*;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -59,8 +56,8 @@ public class BreweryInit implements ModInitializer {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public static final boolean IS_DEV = FabricLoader.getInstance().isDevelopmentEnvironment();
-    public static final boolean DISPLAY_DEV = IS_DEV && true;
-    public static final boolean USE_GENERATOR = IS_DEV && true;
+    public static final boolean DISPLAY_DEV = IS_DEV;
+    public static final boolean USE_GENERATOR = IS_DEV;
 
     private static ServerWorld overworld = null;
 
@@ -82,6 +79,7 @@ public class BreweryInit implements ModInitializer {
 
         GenericModInfo.build(FabricLoader.getInstance().getModContainer(MOD_ID).get());
         PolymerResourcePackUtils.addModAssets(BreweryInit.MOD_ID);
+        ResourcePackExtras.forDefault().addBridgedModelsFolder(id("items"), id("block"));
 
         BrewBlocks.register();
         BrewComponents.register();
@@ -96,9 +94,7 @@ public class BreweryInit implements ModInitializer {
         ServerLifecycleEvents.SERVER_STARTED.addPhaseOrdering(id, Event.DEFAULT_PHASE);
         ServerLifecycleEvents.SERVER_STARTING.register(id, BreweryInit::loadDrinks);
         ServerLifecycleEvents.SERVER_STARTED.register(id, BreweryInit::onServerStarted);
-        ServerLifecycleEvents.SERVER_STOPPED.register((s) -> {
-            overworld = null;
-        });
+        ServerLifecycleEvents.SERVER_STOPPED.register((s) -> overworld = null);
         ServerLifecycleEvents.END_DATA_PACK_RELOAD.addPhaseOrdering(id, Event.DEFAULT_PHASE);
         ServerLifecycleEvents.END_DATA_PACK_RELOAD.register(id, (x, y, z) -> {
             BreweryInit.loadDrinks(x);
@@ -116,9 +112,9 @@ public class BreweryInit implements ModInitializer {
 
         UseBlockCallback.EVENT.register(BrewCauldronBlock::handleUseEvent);
 
-        if (FabricLoader.getInstance().isModLoaded("polydex")) {
-            PolydexCompatImpl.init();
-        }
+//        if (FabricLoader.getInstance().isModLoaded("polydex")) {
+//            PolydexCompatImpl.init();
+//        }
     }
 
     public static void clearData() {

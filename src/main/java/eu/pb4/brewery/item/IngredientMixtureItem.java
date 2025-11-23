@@ -16,9 +16,6 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
@@ -53,10 +50,10 @@ public class IngredientMixtureItem extends Item implements PolymerItem {
             var age = DrinkUtils.getAgeInSeconds(stack) / mult;
 
             if (age > 0) {
-                textConsumer.accept(Text.translatable("text.brewery.age", BrewUtils.fromTimeShort(age).formatted(Formatting.GRAY)));
+                textConsumer.accept(Text.translatable("text.brewery.age", BrewUtils.fromTimeShort(age)).formatted(Formatting.GRAY));
             }
 
-            textConsumer.accept(Text.translatable("text.brewery.cooked_for", BrewUtils.fromTimeShort(time / 20d / mult).formatted(Formatting.GRAY)));
+            textConsumer.accept(Text.translatable("text.brewery.cooked_for", BrewUtils.fromTimeShort(time / 20d / mult)).formatted(Formatting.GRAY));
             for (var ingredient : getIngredients(stack)) {
                 textConsumer.accept(Text.empty().append("" + ingredient.getCount()).append(" × ").append(ingredient.getName()).formatted(Formatting.GRAY));
             }
