@@ -3,11 +3,9 @@ package eu.pb4.brewery.other;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import eu.pb4.placeholders.api.ParserContext;
-import eu.pb4.placeholders.api.TextParserUtils;
 import eu.pb4.placeholders.api.parsers.TagParser;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextCodecs;
-import net.minecraft.util.dynamic.Codecs;
 import org.jetbrains.annotations.Nullable;
 
 

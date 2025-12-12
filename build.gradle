@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '1.10.+'
+    id 'fabric-loom' version "${loom_version}"
 	id 'maven-publish'
 	id "com.modrinth.minotaur" version "2.+"
 	id 'com.matthewprenger.cursegradle' version '1.4.0'
@@ -46,22 +46,22 @@ dependencies {
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-	modImplementation include('xyz.nucleoid:server-translations-api:2.5.1+1.21.5')
-	modImplementation include('eu.pb4:polymer-core:0.13.3+1.21.6')
-	modImplementation include('eu.pb4:polymer-resource-pack:0.13.3+1.21.6')
-    modImplementation ("eu.pb4:polymer-resource-pack-extras:0.13.3+1.21.6")
-    modImplementation ("eu.pb4:polymer-autohost:0.13.3+1.21.6")
-	modImplementation include('eu.pb4:polymer-virtual-entity:0.13.3+1.21.6')
-	modImplementation include("eu.pb4:sgui:1.10.0+1.21.6")
-	modImplementation include("eu.pb4:placeholder-api:2.7.0+1.21.6")
-	modImplementation include("me.lucko:fabric-permissions-api:0.4.0")
+    modImplementation include('xyz.nucleoid:server-translations-api:2.5.2+1.21.9-pre3')
+    modImplementation include("eu.pb4:placeholder-api:2.8.0+1.21.9")
+    modImplementation ("eu.pb4:polymer-core:[${polymer_version}]")
+    modImplementation ("eu.pb4:polymer-blocks:[${polymer_version}]")
+    modImplementation ("eu.pb4:polymer-resource-pack:[${polymer_version}]")
+    modImplementation ("eu.pb4:polymer-virtual-entity:[${polymer_version}]")
+    modImplementation ("eu.pb4:polymer-autohost:${polymer_version}")
+    modImplementation ("eu.pb4:polymer-resource-pack-extras:[${polymer_version}]")
+
+    modImplementation include ("eu.pb4:factorytools:[${factorytools_version}]")
+    modImplementation include("eu.pb4:sgui:[${sgui_version}]")
+
+    modCompileOnly ("maven.modrinth:polydex:[${polydex_version}]")
 	//modImplementation include('xyz.nucleoid:more-codecs:0.2.2+1.18')
-    modImplementation ("eu.pb4:factorytools:0.7.1+1.21.6")
-
+    modImplementation include("me.lucko:fabric-permissions-api:0.5.0")
 	implementation include("net.objecthunter:exp4j:0.4.8")
-
-
-	modCompileOnly "maven.modrinth:polydex:1.5.0+1.21.5-rc2"
 
 	// Uncomment the following line to enable the deprecated Fabric API modules. 
 	// These are included in the Fabric API production distribution and allow you to update your mod to the latest modules at a later more convenient time.

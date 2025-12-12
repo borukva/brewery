@@ -70,7 +70,7 @@ public class DrinkItem extends Item implements PolymerItem {
             Criteria.CONSUME_ITEM.trigger((ServerPlayerEntity) playerEntity, stack);
         }
 
-        if (!world.isClient) {
+        if (!world.isClient()) {
             try {
                 var type = DrinkUtils.getType(stack);
 
