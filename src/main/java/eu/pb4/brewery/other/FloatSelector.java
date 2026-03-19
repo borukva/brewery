@@ -31,6 +31,7 @@ public record FloatSelector<T>(List<Entry<T>> entries) {
         return new FloatSelector<>(List.of(Entry.of(result)));
     }
 
+    @SafeVarargs
     public static <T> FloatSelector<T> of(float min, float max, T... results) {
         var list = new ArrayList<Entry<T>>(results.length);
         for (int i = 0; i < results.length; i++) {
@@ -68,17 +69,24 @@ public record FloatSelector<T>(List<Entry<T>> entries) {
                     return DataResult.success(new Pair<>(FloatSelector.of(defaultValue), input));
                 }
 
-                return result.map(x -> x.mapFirst(list -> {
+                return result.flatMap(x -> {
+                    var list = x.getFirst();
                     var out = new ArrayList<Entry<T>>();
                     for (int i = 0; i < list.size(); i++) {
                         var either = list.get(i);
                         if (either.left().isPresent()) {
                             out.add(either.left().get());
                         } else {
+                            var right = either.right();
+                            if (right.isEmpty()) {
+                                final int index = i;
+                                return DataResult.error(() -> "Invalid float selector entry at index " + index + ": missing either side");
+                            }
+
                             if (i == 0) {
-                                out.add(new Entry<>(min, either.right().get()));
+                                out.add(new Entry<>(min, right.get()));
                             } else if (i == list.size() - 1) {
-                                out.add(new Entry<>(max, either.right().get()));
+                                out.add(new Entry<>(max, right.get()));
                             } else {
                                 float previous = out.get(i - 1).valueForPass;
                                 float nextValue = max;
@@ -93,8 +101,12 @@ public record FloatSelector<T>(List<Entry<T>> entries) {
                                 float val = (nextValue - previous) / (nextPos - i + 1);
                                 for (; i < nextPos; i++) {
                                     var next = list.get(i);
-                                    //noinspection OptionalGetWithoutIsPresent
-                                    out.add(new Entry<>(previous + val * i, next.right().get()));
+                                    var nextRight = next.right();
+                                    if (nextRight.isEmpty()) {
+                                        final int index = i;
+                                        return DataResult.error(() -> "Invalid float selector interpolation entry at index " + index);
+                                    }
+                                    out.add(new Entry<>(previous + val * i, nextRight.get()));
                                 }
                                 i--;
                             }
@@ -102,8 +114,8 @@ public record FloatSelector<T>(List<Entry<T>> entries) {
                     }
 
                     out.sort(Comparator.comparing(Entry::valueForPass));
-                    return new FloatSelector<>(out);
-                }));
+                    return DataResult.success(new Pair<>(new FloatSelector<>(out), x.getSecond()));
+                });
             }
 
             @Override
@@ -121,5 +133,5 @@ public record FloatSelector<T>(List<Entry<T>> entries) {
         public static <T> Entry<T> of(T result) {
             return new Entry<>(Float.NEGATIVE_INFINITY, result);
         }
-    };
+    }
 }

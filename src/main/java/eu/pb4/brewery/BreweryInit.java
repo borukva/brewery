@@ -77,7 +77,10 @@ public class BreweryInit implements ModInitializer {
                         [ "red", "yellow", "green", "blue"]
                         """)).result().get().getFirst().entries().forEach(x -> System.out.println(x.valueForPass() + ": " + x.result()));*/
 
-        GenericModInfo.build(FabricLoader.getInstance().getModContainer(MOD_ID).get());
+        FabricLoader.getInstance().getModContainer(MOD_ID).ifPresentOrElse(
+                GenericModInfo::build,
+                () -> LOGGER.error("Couldn't initialize GenericModInfo: missing mod container '{}'", MOD_ID)
+        );
         PolymerResourcePackUtils.addModAssets(BreweryInit.MOD_ID);
         ResourcePackExtras.forDefault().addBridgedModelsFolder(id("items"), id("block"));
 
@@ -145,13 +148,20 @@ public class BreweryInit implements ModInitializer {
             } catch (Throwable e) {
                 DRINK_TYPE_ID.remove(DRINK_TYPES.remove(id));
                 LOGGER.warn("{} isn't valid brewery definition!", res.getKey().toString());
-                e.printStackTrace();
+                LOGGER.error(e.toString());
             }
         }
 
         for (var res : server.getResourceManager().findResources("", (x) -> x.getPath().equals("brewery_effects.json")).entrySet()) {
             try {
-                var effects = AlcoholValueEffect.CODEC.decode(ops, JsonParser.parseReader(res.getValue().getReader())).result().get().getFirst();
+                var effectsDecode = AlcoholValueEffect.CODEC.decode(ops, JsonParser.parseReader(res.getValue().getReader()));
+                var effectsOptional = effectsDecode.resultOrPartial(error ->
+                        LOGGER.error("Failed to decode brewery effects '{}': {}", res.getKey(), error)
+                );
+                if (effectsOptional.isEmpty()) {
+                    continue;
+                }
+                var effects = effectsOptional.get().getFirst();
 
                 if (effects.replace()) {
                     ALCOHOL_EFFECTS.clear();
@@ -163,7 +173,7 @@ public class BreweryInit implements ModInitializer {
                 ITEM_ALCOHOL_REMOVAL_VALUES.putAll(effects.itemReduction());
             } catch (Throwable e) {
                 LOGGER.warn("{} isn't valid brewery effect definition!", res.getKey().toString());
-                e.printStackTrace();
+                LOGGER.error(e.toString());
             }
         }
 
@@ -172,9 +182,14 @@ public class BreweryInit implements ModInitializer {
             var gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
             String potionModelJson = "";
             try {
-                potionModelJson = Files.readString(PolymerCommonUtils.getClientJarRoot().resolve("assets/minecraft/items/potion.json"));
+                var clientJarRoot = PolymerCommonUtils.getClientJarRoot();
+                if (clientJarRoot == null) {
+                    LOGGER.error("Failed to read base potion model JSON: client jar root is null");
+                } else {
+                    potionModelJson = Files.readString(clientJarRoot.resolve("assets/minecraft/items/potion.json"));
+                }
             } catch (Throwable e) {
-                e.printStackTrace();
+                LOGGER.error("Failed to read base potion model JSON:\n{}", e.toString());
             }
 
             {
@@ -193,7 +208,7 @@ public class BreweryInit implements ModInitializer {
                         Files.writeString(dirModel.resolve( "brewery_drink/" +key + ".json"), finalPotionModelJson);
                         Files.writeString(dir.resolve(key + ".json"), gson.toJson(DrinkType.CODEC.encodeStart(ops, drinkType.apply(id)).getOrThrow()));
                     } catch (Throwable e) {
-                        e.printStackTrace();
+                        LOGGER.error("Failed to generate default brew assets for '{}':\n{}", key, e.toString());
                     }
                 });
             }
@@ -207,11 +222,16 @@ public class BreweryInit implements ModInitializer {
 
                 ALCOHOL_EFFECTS.addAll(effects.entries());
                 try {
+                    var encodedEffects = AlcoholValueEffect.CODEC.encodeStart(ops, effects)
+                            .resultOrPartial(error -> LOGGER.error("Failed to encode generated brewery effects: {}", error));
+                    if (encodedEffects.isEmpty()) {
+                        return;
+                    }
                     Files.writeString(FabricLoader.getInstance().getGameDir().resolve("../src/main/resources/data/brewery/brewery_effects.json"),
-                            gson.toJson(AlcoholValueEffect.CODEC.encodeStart(ops, effects).result().get()
+                            gson.toJson(encodedEffects.get()
                             ));
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    LOGGER.error("Failed to write generated brewery effects JSON:\n{}", e.toString());
                 }
             }
         }

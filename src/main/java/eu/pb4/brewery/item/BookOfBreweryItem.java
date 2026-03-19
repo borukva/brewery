@@ -62,7 +62,12 @@ public class BookOfBreweryItem extends Item implements PolymerItem {
                 .sorted(Comparator.comparing(x -> x.getValue().looks().nameSelector().select(7).text().getString(), collator))
                 .toList();
 
-        var container = FabricLoader.getInstance().getModContainer(BreweryInit.MOD_ID).get();
+        var containerOptional = FabricLoader.getInstance().getModContainer(BreweryInit.MOD_ID);
+        if (containerOptional.isEmpty()) {
+            BreweryInit.LOGGER.error("Skipping book rebuild: mod container '{}' is missing", BreweryInit.MOD_ID);
+            return;
+        }
+        var container = containerOptional.get();
 
         {
             var contributors = new ArrayList<String>();
@@ -141,7 +146,7 @@ public class BookOfBreweryItem extends Item implements PolymerItem {
             try {
                 index = buildInfo(e.getKey(), e.getValue(), barrelAgingMultiplier, cookingTimeMultiplier);
             } catch (Throwable e2) {
-                e2.printStackTrace();
+                BreweryInit.LOGGER.error("Failed to build book entry for drink '{}'", e.getKey(), e2);
             }
             if (index != -1) {
                 int finalIndex = index;
@@ -158,7 +163,10 @@ public class BookOfBreweryItem extends Item implements PolymerItem {
         if (!indexEntries.isEmpty()) {
             builder.addPage(indexEntries.toArray(new Text[0]));
         }
-        builder.setComponent(DataComponentTypes.WRITTEN_BOOK_CONTENT, builder.getComponent(DataComponentTypes.WRITTEN_BOOK_CONTENT).asResolved());
+        var writtenBookContent = builder.getComponent(DataComponentTypes.WRITTEN_BOOK_CONTENT);
+        if (writtenBookContent != null) {
+            builder.setComponent(DataComponentTypes.WRITTEN_BOOK_CONTENT, writtenBookContent.asResolved());
+        }
 
         Gui.indexBook = builder.asStack();
     }
@@ -170,7 +178,10 @@ public class BookOfBreweryItem extends Item implements PolymerItem {
 
         list.add(Text.empty().append(Text.literal("\uD83E\uDDEA ").styled(x -> x.withColor(type.looks().colorSelector().select(7)))).append(type.looks().nameSelector().select(7).text().copy().styled(x -> x.withBold(true).withUnderline(true))));
         list.add(Text.empty());
-        var info = type.info().get();
+        var info = type.info().orElse(null);
+        if (info == null) {
+            return -1;
+        }
 
         if (!type.ingredients().isEmpty()) {
             list.add(Text.translatable("polydex.brewery.ingredients").styled(x -> x.withBold(true).withUnderline(true).withColor(Formatting.GOLD)));
@@ -255,7 +266,11 @@ public class BookOfBreweryItem extends Item implements PolymerItem {
 //            builder.addPage(text.text().copy());
 //        }
 
-        builder.setTitle(id.toString());
+        var title = id.toString();
+        if (title.length() > 32) {
+            title = title.substring(0, 32);
+        }
+        builder.setTitle(title);
         builder.setAuthor("Brewery");
 
         Gui.BOOKS.add(builder.asStack());
